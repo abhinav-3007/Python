@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block contents %}
+<div class="card">
+    <div class="card-body">
+        <img class="rounded-circle mx-auto d-block" style="width:150px; height:150px;" src="{{url_for('static', filename='profile_pictures/'+profile.profile_pic)}}" alt="Profile Picture">
+        <h2 class="card-text text-center">{{profile.first_name+" "+profile.last_name}}</h2>
+        <p class="card-text text-center text-info">{{profile.email}}</p>
+        <div class="border-top p-4">
+            <h4 class="card-text">About Me</h4>
+            <p class="card-text blog-content">{{profile.about_me}}</p>
+            <button class="btn btn-primary mt-4" data-toggle="collapse" data-target="#collapseUserPost">Show posts by {{profile.first_name}}</button>
+        </div>
+    </div>
+</div>
+<div class="collapse" id="collapseUserPost">
+    {% for post in posts %}
+        <div class="card">
+             <div class="card-body">
+                 <div class="border-bottom mb-4 link-class">
+                     <a class="card-text " href="{{url_for('profile_by_id', user_id=post.creator.id)}}">{{post.creator.first_name + " " + post.creator.last_name}}</a>
+                     <small class="card-text text-muted float-right">{{post.date_posted.strftime("%d-%m-%Y")}}</small>
+                 </div>
+                <div class="p-3">
+                 {% if post.post_pic %}
+                    <img class="img-fluid mb-2" src="{{url_for('static', filename='images/'+post.post_pic)}}" alt="Post Picture">
+                 {% endif %}
+                 <h2 class="card-title link-class"><a href="{{url_for('post', post_id=post.id)}}" >{{post.title}}</a></h2>
+                <p class="card-text blog-content">{{post.content}}</p>
+                </div>
+            </div>
+            </div>
+
+        {% endfor %}
+</div>
+{% endblock contents %}

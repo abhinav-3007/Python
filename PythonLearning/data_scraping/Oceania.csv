@@ -1,0 +1,7 @@
+S.no,Country,Total Cases,New Cases,Total Deaths,New Deaths,Total Recovered,New Recovered,Active Cases,Serious/Critical,Total Cases per 1M pop,Deaths per 1M pop,Total Tests,Tests per 1M pop,Population,Continent,1 Case every X ppl,1 Death every X ppl,1 Test every X ppl
+1,Australia,"7,290",+5,102,,"6,783",+22,405,2,286,4,"1,746,635","68,540","25,483,610",Australia/Oceania,"3,496","249,839",15
+2,New Zealand,"1,504",,22,,"1,482",,0,,301,4,"304,832","60,941","5,002,100",Australia/Oceania,"3,326","227,368",16
+3,French Polynesia,60,,,,60,,0,,214,,"4,262","15,177","280,824",Australia/Oceania,"4,680",,66
+4,New Caledonia,21,,,,20,,1,,74,,"7,477","26,203","285,350",Australia/Oceania,"13,588",,38
+5,Fiji,18,,,,18,,0,,20,,"2,431","2,713","896,103",Australia/Oceania,"49,784",,369
+6,Papua New Guinea,8,,,,8,,0,,0.9,,"5,281",591,"8,937,038",Australia/Oceania,"1,117,130",,"1,692"

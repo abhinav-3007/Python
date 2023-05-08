@@ -1,0 +1,32 @@
+body{
+    background-colour:#FAFAFA;
+    margin-top:80px;
+}
+
+.link-class a{
+    color: #000000;
+}
+
+.link-class a:hover{
+    color:#0066CC;
+    text-decoration:none;
+}
+
+.blog-content{
+    white-space:pre-line;
+}
+
+.error{
+    text-align:center;
+}
+
+.error .errorcode{
+    color:#4686CC;
+    font-size:96px;
+    font-weight:bold;
+}
+
+.error .errordescription{
+    color:647788;
+    font-size:12px;
+}

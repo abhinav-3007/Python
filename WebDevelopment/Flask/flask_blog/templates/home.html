@@ -1,0 +1,61 @@
+{% extends "layout.html"%}
+{%block contents%}
+
+<div class="row">
+    <div class="col-md-8">
+        {% for post in posts.items %}
+            <div class="card p-2">
+                <div class="card-body">
+                    <div class="border-bottom mb-4">
+                        <div class="link-class"><a class="card-text" href="{{url_for('profile_by_id',user_id=post.creator.id)}}">{{ post.creator.first_name+' '+ post.creator.last_name}} </a>
+                        <small class="card-text text-muted float-right">{{ post.date_posted.strftime('%d-%m-%Y')}}</small>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        {%if post.post_pic%}
+                            <img class="img-fluid mb-2" src="{{url_for('static',filename='images/'+post.post_pic)}}" alt="Post Picture">
+                        {%endif%}
+                        <h2 class="card-title link-class"><a href="{{url_for('post',post_id=post.id)}}">{{ post.title }}</a></h2>
+                        <p class="card-text blog-content">{{ post.content }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        <ul class="list-group list-group-horizontal list-group-flush justify-content-between">
+            {% for page_number in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
+                {% if page_number %}
+                    {% if posts.page == page_number %}
+                        <li class="list-group-item"><a class="btn btn-info m-2" href="{{ url_for('home', page=page_number) }}">{{ page_number }}</a></li>
+                    {% else %}
+            <li class="list-group-item"><a class="btn btn-outline-info m-2" href="{{ url_for('home', page=page_number) }}">{{ page_number }}</a></li>
+                    {% endif %}
+                {% else %}
+            <li class="list-group-item"><span class="m-2">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 sticky-top">
+            <legend class="border-bottom mb-4">Sidebar</legend>
+            {%if current_user.is_authenticated%}
+                <h4>{{current_user.first_name+' '+ current_user.last_name}}</h4>
+                <p class="text-muted">About me:
+                <img src="{{url_for('static',filename='profile_pictures/'+current_user.profile_pic)}}" class="rounded-circle mx-auto d-block" style="height: 150px;width: 150px;">
+                <p class="blog-content"> {{current_user.about_me}}</p>
+                <ul class="list-group">
+                    <li class="list-group-item">My Posts</li>
+                    <li class="list-group-item">Profile</li>
+                    <li class="list-group-item">Announcements</li>
+                </ul>
+            {% else %}
+                <h4>{{about_info.name}}</h4>
+                <p class="text-muted">About the site:
+                    <img src="{{url_for('static',filename='images/'+about_info.picture)}}" class="rounded-circle mx-auto d-block" style="height: 150px;width: 150px;">
+                    <p class="blog-content"> {{about_info.tagline}}</p>
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+{% endblock contents%}

@@ -1,0 +1,8 @@
+Continent,Total Cases,New Cases,Total Deaths,New Deaths,Total Recovered,New Recovered,Active Cases,Serious/Critical,Total Cases per 1M pop,Deaths per 1M pop,Total Tests,Tests per 1M pop,Population,1 Case every X ppl,1 Death every X ppl,1 Test every X ppl
+North America,"2,397,688","+11,215","142,099",+752,"1,006,251","+6,112","1,249,338","19,454",,
+South America,"1,313,992","+1,010","56,401",+28,"678,818",+549,"578,773","11,987",,
+Europe,"2,172,193","+14,856","181,967",+509,"1,145,583","+11,093","844,643","6,741",,
+Asia,"1,533,552","+34,216","38,543",+643,"931,625","+19,051","563,384","15,348",,
+Africa,"221,086","+1,732","5,916",+47,"101,841","+1,130","113,329",520,,
+Oceania,"8,901",+5,124,,"8,371",+22,406,2,,
+World,"7,648,133","+63,034","425,065","+1,979","3,873,140","+37,957","3,349,928","54,056",981,54.5
