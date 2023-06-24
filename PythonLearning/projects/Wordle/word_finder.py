@@ -5,7 +5,8 @@ with open('Word_List.txt', 'r') as file:
     words = file.read().split('\n')
 freq = {}
 for word in words:
-    for character in word:
+    word_li = {*word}
+    for character in word_li:
         if character in freq.keys():
             freq[character] += 1
         else:
