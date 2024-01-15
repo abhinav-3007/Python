@@ -58,8 +58,6 @@ def draw(win, colour, p1, p2, ball, font):
     pygame.draw.rect(win, colour, (7, p1.y, p1.len, p1.bth))
     # drawing the second paddle
     pygame.draw.rect(win, colour, (1012, p2.y, p2.len, p2.bth))
-    pygame.draw.rect(win, (255,0,0), (7, p1.y+30, 3,3))
-    pygame.draw.rect(win, (255,0,0), (1012, p2.y+30, 3,3))
     # drawing the ball
     pygame.draw.rect(win, colour, (ball.x-8, ball.y-8, 16, 16))
     # displaying the score

@@ -15,11 +15,11 @@ class MyWindow(QMainWindow):
 
         self.label = QLabel(self)
         self.label.setText(str(self.count))
-        self.label.move(40,35)
+        self.label.move(40, 35)
 
         self.increase = QPushButton(self)
         self.increase.setText("Increase")
-        self.increase.move(0,0)
+        self.increase.move(0, 0)
         self.increase.clicked.connect(self.increase_click)
 
         self.decrease = QPushButton(self)

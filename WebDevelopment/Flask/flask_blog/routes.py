@@ -11,7 +11,7 @@ with app.app_context():
     db.create_all()
 
     about_info ={
-        "name" : "Abhi's Blog",
+        "name" : "Abhinav's Blog",
         "tagline" : "Share your thoughts on this site for others to see.",
         "about" : "This is a website made to give you a platform where you can share your thoughts and ideas amongst other "
                   "things with the world.",

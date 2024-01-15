@@ -4,11 +4,11 @@ from random import randrange
 
 pygame.init()
 
-sc_width = 500
+sc_width = 530
 sc_height = 480
 
 win = pygame.display.set_mode((sc_width, sc_height))
-pygame.display.set_caption("Demo")
+pygame.display.set_caption("Shooter")
 
 walkRight = [pygame.image.load('./images/R1.png'), pygame.image.load('./images/R2.png'),
              pygame.image.load('./images/R3.png'),

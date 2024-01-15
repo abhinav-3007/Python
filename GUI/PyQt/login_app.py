@@ -8,7 +8,7 @@ class Login(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(20,20,200,200)
+        self.setGeometry(20, 20, 200, 200)
         self.setWindowTitle("Login")
 
         self.gridlayout = QGridLayout()
@@ -26,12 +26,12 @@ class Login(QWidget):
         self.button2 = QPushButton("Clear", self)
         self.button2.clicked.connect(self.on_clear_click)
 
-        self.gridlayout.addWidget(self.label1,0,0)
+        self.gridlayout.addWidget(self.label1, 0, 0)
         self.gridlayout.addWidget(self.lineedit1, 0, 1, 1, 2)
-        self.gridlayout.addWidget(self.label2,1,0)
-        self.gridlayout.addWidget(self.lineedit2,1,1,1,2)
-        self.gridlayout.addWidget(self.button1, 2,1)
-        self.gridlayout.addWidget(self.button2, 2,2)
+        self.gridlayout.addWidget(self.label2, 1, 0)
+        self.gridlayout.addWidget(self.lineedit2, 1, 1, 1, 2)
+        self.gridlayout.addWidget(self.button1, 2, 1)
+        self.gridlayout.addWidget(self.button2, 2, 2)
 
         self.setLayout(self.gridlayout)
 

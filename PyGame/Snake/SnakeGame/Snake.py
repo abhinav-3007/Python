@@ -122,9 +122,9 @@ def draw():
     for y in range(0, grid_ct):
         for x in range(0, grid_ct):
             if x == 0 or y == 0 or x == 20 or y == 20:
-                pygame.draw.rect(win, (0, 50, 0), (x * grid_w, y * grid_h, grid_w, grid_h))
+                pygame.draw.rect(win, (0, 100, 0), (x * grid_w, y * grid_h, grid_w, grid_h))
             elif (x + y) % 2 == 0:
-                pygame.draw.rect(win, (0, 150, 0), (x * grid_w, y * grid_h, grid_w, grid_h))
+                pygame.draw.rect(win, (0, 200, 0), (x * grid_w, y * grid_h, grid_w, grid_h))
             else:
                 pygame.draw.rect(win, (0, 255, 0), (x * grid_w, y * grid_h, grid_w, grid_h))
     font = pygame.font.SysFont("comicsansms", 15, True)
