@@ -58,7 +58,7 @@ class Enemies:
         self.image = image
         self.x = 1000
         self.y = y
-        self.x_velocity = 2
+        self.x_velocity = 3
         self.y_velocity = 0
 
     def move(self):
@@ -115,13 +115,15 @@ def checkCollision(player, enemies):
                 player.setImage()
             else:
                 death()
-            player.invulnerability = 70
+            player.invulnerability = 100
             break
 
 
-def redrawGameWindow(player, background, enemies):
+def redrawGameWindow(player, background, enemies, font):
     win.fill((151, 123, 89))
     background.draw()
+    health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
+    win.blit(health, (18, 18))
     for enemy in enemies:
         enemy.draw()
     player.draw()
@@ -129,7 +131,7 @@ def redrawGameWindow(player, background, enemies):
 
 
 def main():
-    # font = pygame.font.SysFont("comicsans", 30, True)
+    font = pygame.font.Font("../fonts/ArcadeFont.ttf", 20)
     background = Background()
     clock = pygame.time.Clock()
     running = True
@@ -180,7 +182,7 @@ def main():
         else:
             checkCollision(player, enemies)
 
-        redrawGameWindow(player, background, enemies)
+        redrawGameWindow(player, background, enemies, font)
 
 
 if __name__ == '__main__':
