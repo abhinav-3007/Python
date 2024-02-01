@@ -53,6 +53,7 @@ class Background:
 
 
 class Enemies:
+    spawn = True
     def __init__(self, y, image):
         # placeholder image
         self.image = image
@@ -60,6 +61,7 @@ class Enemies:
         self.y = y
         self.x_velocity = 3
         self.y_velocity = 0
+        self.damage = 1
 
     def move(self):
         self.x -= self.x_velocity
@@ -75,7 +77,6 @@ class Razor(Enemies):
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
-        win.blit(self.image, (self.x, self.y))
         self.image_count += 1
         if self.image_count == 40:
             self.image = self.sprites[0]
@@ -90,6 +91,7 @@ class Scissors(Enemies):
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)),
                              pygame.transform.scale(pygame.image.load('../images/enemies/scissors2.png'), (245, 140))]
         self.image_count = 0
+        self.x_velocity = 4
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -98,6 +100,42 @@ class Scissors(Enemies):
             self.image = self.sprites[0]
         elif self.image_count == 80:
             self.image = self.sprites[1]
+            self.image_count = 0
+
+class Blade(Enemies):
+    def __init__(self, y):
+        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/blade.png'), (60, 76)))
+        self.x_velocity = 5
+        self.image_count = 0
+
+    def draw(self):
+        win.blit(self.image, (self.x, self.y))
+        self.image_count += 1
+        if self.image_count == 40:
+            self.image = pygame.transform.rotate(self.image, 90)
+            self.image_count = 0
+
+
+class Barber(Enemies):
+    def __init__(self, y):
+        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)))
+        self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)),
+                        pygame.transform.scale(pygame.image.load('../images/enemies/barber2.png'), (88, 140)),
+                        pygame.transform.scale(pygame.image.load('../images/enemies/barber3.png'), (88, 140)),
+                        pygame.transform.scale(pygame.image.load('../images/enemies/barber4.png'), (88, 140)),
+                        pygame.transform.scale(pygame.image.load('../images/enemies/barber5.png'), (88, 140)),
+                        pygame.transform.scale(pygame.image.load('../images/enemies/barber6.png'), (88, 140))]
+        self.image_count = 0
+        self.x_velocity = 2.2
+        self.damage = 2
+
+    def draw(self):
+        win.blit(self.sprites[self.image_count // 20], (self.x, self.y))
+
+        # iterating through various man sprites
+        if self.image_count + 1 < len(self.sprites) * 20:
+            self.image_count += 1
+        else:
             self.image_count = 0
 
 
@@ -109,9 +147,12 @@ def checkCollision(player, enemies):
     for enemy in enemies:
         if player.invulnerability > 0:
             break
-        if enemy.x < player.x+92 < enemy.x + enemy.image.get_width() and enemy.y < player.y < enemy.y + enemy.image.get_height():
+        if (enemy.x+20 < player.x < enemy.x + enemy.image.get_width() or enemy.x+20 < player.x+92 < enemy.x + enemy.image.get_width()) and (enemy.y < player.y < enemy.y + enemy.image.get_height() or enemy.y < player.y + 120< enemy.y + enemy.image.get_height()):
             if player.health > 1:
-                player.health -= 1
+                player.health -= enemy.damage
+                if player.health < 1:
+                    player.health = 1
+                    death()
                 player.setImage()
             else:
                 death()
@@ -135,23 +176,19 @@ def main():
     background = Background()
     clock = pygame.time.Clock()
     running = True
-    enemy_timer = 400
     player = Player()
-    enemy_types = [Razor, Scissors]
+    enemy_types = [Razor, Scissors, Barber]
     enemies = []
     # main loop
     while running:
         clock.tick(250)
-
-        if enemy_timer == 400:
-            index = random.randint(0, 1)
+        if Enemies.spawn:
+            index = random.randint(0, len(enemy_types)-1)
             y = 480
             if index == 1:
                 y = random.randrange(50, 340)
             enemies.append(enemy_types[index](y))
-            enemy_timer = 0
-
-        enemy_timer += 1
+            Enemies.spawn = False
         # condition to quit program
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -176,6 +213,7 @@ def main():
             if enemy.x < -enemy.image.get_width():
                 enemies.remove(enemy)
                 del enemy
+                Enemies.spawn = True
 
         if player.invulnerability > 0:
             player.invulnerability -= 1
