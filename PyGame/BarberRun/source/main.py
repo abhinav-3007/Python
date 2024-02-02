@@ -4,19 +4,25 @@ import pygame
 
 class Player:
     def __init__(self):
-        self.health = 4
+        self.health = 20
+        self.level = 4
         self.score = 0
+        self.image = pygame.transform.scale(pygame.image.load(f'../images/level_4/man1.png'), (92, 120))
+        self.injured = pygame.transform.scale(
+            pygame.image.load(f'../images/level_4/man_hit.png'), (92, 120))
         self.sprites = []
+        self.attack_sprites = []
         self.setImage()
         self.image_count = 0
         self.x = 80
         self.y = 500
         self.isJump = False
         self.jump_velocity = 70
-        self.invulnerability = 70
+        self.invulnerability = 0
+        self.hit_countdown = 0
 
     def draw(self):
-        win.blit(self.sprites[self.image_count // 15], (self.x, self.y))
+        self.image = self.sprites[self.image_count // 15]
 
         # iterating through various man sprites
         if self.image_count + 1 < len(self.sprites)*15:
@@ -24,15 +30,30 @@ class Player:
         else:
             self.image_count = 0
 
+        if self.hit_countdown:
+            self.image = self.injured
+            self.hit_countdown = max(0, self.hit_countdown - 1)
+        win.blit(self.image, (self.x, self.y))
     def setImage(self):
-        self.sprites = [pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man1.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man2.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man3.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man4.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man5.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man6.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man7.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man8.png'), (92, 120))]
+        self.level = min((self.health+1)//2, 4)
+        # loading the images for the player
+        self.sprites = [pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man1.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man2.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man3.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man4.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man5.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man6.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man7.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man8.png'), (92, 120))]
+        self.attack_sprites.clear()
+        # loading the images for when the player attacks
+        for i in range(2, self.level+1):
+            length = 176 if i == 2 else 318 if i == 3 else 459
+            self.attack_sprites.append(
+                pygame.transform.scale(pygame.image.load(f'../images/level_{i}/man_shooting.png'), (length, 120)))
+        # loading image for when player is hit
+        self.injured = pygame.transform.scale(
+            pygame.image.load(f'../images/level_{self.level}/man_hit.png'), (92, 120))
 
 
 class Background:
@@ -49,7 +70,7 @@ class Background:
         if self.x+1 <= -self.image_width:
             self.x = 0
         else:
-            self.x -= 2
+            self.x -= 1.5
 
 
 class Enemies:
@@ -91,7 +112,8 @@ class Scissors(Enemies):
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)),
                              pygame.transform.scale(pygame.image.load('../images/enemies/scissors2.png'), (245, 140))]
         self.image_count = 0
-        self.x_velocity = 4
+        self.x_velocity = 5
+        self.damage = 2
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -103,9 +125,11 @@ class Scissors(Enemies):
             self.image_count = 0
 
 class Blade(Enemies):
-    def __init__(self, y):
+    def __init__(self, x, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/blade.png'), (60, 76)))
-        self.x_velocity = 5
+        self.x = x
+        self.x_velocity = 7
+        self.damage = 2
         self.image_count = 0
 
     def draw(self):
@@ -126,8 +150,8 @@ class Barber(Enemies):
                         pygame.transform.scale(pygame.image.load('../images/enemies/barber5.png'), (88, 140)),
                         pygame.transform.scale(pygame.image.load('../images/enemies/barber6.png'), (88, 140))]
         self.image_count = 0
-        self.x_velocity = 2.2
-        self.damage = 2
+        self.x_velocity = 2
+        self.throw_count = 250
 
     def draw(self):
         win.blit(self.sprites[self.image_count // 20], (self.x, self.y))
@@ -147,16 +171,14 @@ def checkCollision(player, enemies):
     for enemy in enemies:
         if player.invulnerability > 0:
             break
-        if (enemy.x+20 < player.x < enemy.x + enemy.image.get_width() or enemy.x+20 < player.x+92 < enemy.x + enemy.image.get_width()) and (enemy.y < player.y < enemy.y + enemy.image.get_height() or enemy.y < player.y + 120< enemy.y + enemy.image.get_height()):
+        if enemy.x+20 < player.x+92 < enemy.x + enemy.image.get_width() and (enemy.y < player.y < enemy.y + enemy.image.get_height() or enemy.y < player.y + 120< enemy.y + enemy.image.get_height()):
             if player.health > 1:
-                player.health -= enemy.damage
-                if player.health < 1:
-                    player.health = 1
-                    death()
+                player.health = max(1, player.health-enemy.damage)
                 player.setImage()
             else:
                 death()
             player.invulnerability = 100
+            player.hit_countdown = 20
             break
 
 
@@ -177,7 +199,7 @@ def main():
     clock = pygame.time.Clock()
     running = True
     player = Player()
-    enemy_types = [Razor, Scissors, Barber]
+    enemy_types = [Razor, Scissors]
     enemies = []
     # main loop
     while running:
@@ -189,6 +211,8 @@ def main():
                 y = random.randrange(50, 340)
             enemies.append(enemy_types[index](y))
             Enemies.spawn = False
+            if len(enemy_types) == 2:
+                enemy_types.append(Barber)
         # condition to quit program
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -210,15 +234,22 @@ def main():
 
         for enemy in enemies:
             enemy.move()
+            if isinstance(enemy, Barber):
+                if enemy.throw_count == 250:
+                    enemies.append(Blade(enemy.x, enemy.y))
+                    enemy.throw_count = 0
+                enemy.throw_count += 1
             if enemy.x < -enemy.image.get_width():
                 enemies.remove(enemy)
+                if not isinstance(enemy, Blade):
+                    Enemies.spawn = True
                 del enemy
-                Enemies.spawn = True
 
         if player.invulnerability > 0:
             player.invulnerability -= 1
         else:
             checkCollision(player, enemies)
+
 
         redrawGameWindow(player, background, enemies, font)
 
@@ -232,6 +263,7 @@ if __name__ == '__main__':
     # initializing game window
     win = pygame.display.set_mode((sc_width, sc_height))
     pygame.display.set_caption("Barber Run")
+    pygame.display.set_icon(pygame.image.load('../images/icon.png'))
 
     # calling main loop
     main()
