@@ -4,12 +4,14 @@ import pygame
 
 class Player:
     def __init__(self):
-        self.health = 20
+        self.health = 8
         self.level = 4
         self.score = 0
         self.image = pygame.transform.scale(pygame.image.load(f'../images/level_4/man1.png'), (92, 120))
         self.injured = pygame.transform.scale(
             pygame.image.load(f'../images/level_4/man_hit.png'), (92, 120))
+        self.healed = pygame.transform.scale(
+            pygame.image.load(f'../images/level_4/man_healed.png'), (92, 120))
         self.sprites = []
         self.attack_sprites = []
         self.setImage()
@@ -30,11 +32,14 @@ class Player:
         else:
             self.image_count = 0
 
-        if self.hit_countdown:
+        if self.hit_countdown > 0:
             self.image = self.injured
             self.hit_countdown = max(0, self.hit_countdown - 1)
+        if self.hit_countdown < 0:
+            self.image = self.healed
+            self.hit_countdown = min(0, self.hit_countdown + 1)
         win.blit(self.image, (self.x, self.y))
-    def setImage(self):
+    def setImage(self, is_growth_serum=False):
         self.level = min((self.health+1)//2, 4)
         # loading the images for the player
         self.sprites = [pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man1.png'), (92, 120)),
@@ -54,6 +59,9 @@ class Player:
         # loading image for when player is hit
         self.injured = pygame.transform.scale(
             pygame.image.load(f'../images/level_{self.level}/man_hit.png'), (92, 120))
+        # loading image for when player is healed
+        self.healed = pygame.transform.scale(
+            pygame.image.load(f'../images/level_{self.level}/man_healed.png'), (92, 120))
 
 
 class Background:
@@ -73,7 +81,7 @@ class Background:
             self.x -= 1.5
 
 
-class Enemies:
+class Character:
     spawn = True
     def __init__(self, y, image):
         # placeholder image
@@ -89,7 +97,24 @@ class Enemies:
         self.y -= self.y_velocity
 
 
-class Razor(Enemies):
+class GrowthSerum(Character):
+    def __init__(self, y):
+        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (45, 80)))
+        self.damage = -2
+        self.x_velocity = 1.5
+        self.image_count = 0
+
+    def draw(self):
+        win.blit(self.image, (self.x, self.y))
+        self.image_count += 1
+        if self.image_count == 40:
+            self.y += 5
+        elif self.image_count == 80:
+            self.y -= 5
+            self.image_count = 0
+
+
+class Razor(Character):
     def __init__(self, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (83, 140)))
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (83, 140)),
@@ -106,7 +131,7 @@ class Razor(Enemies):
             self.image_count = 0
 
 
-class Scissors(Enemies):
+class Scissors(Character):
     def __init__(self, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)))
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)),
@@ -124,7 +149,7 @@ class Scissors(Enemies):
             self.image = self.sprites[1]
             self.image_count = 0
 
-class Blade(Enemies):
+class Blade(Character):
     def __init__(self, x, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/blade.png'), (60, 76)))
         self.x = x
@@ -140,7 +165,7 @@ class Blade(Enemies):
             self.image_count = 0
 
 
-class Barber(Enemies):
+class Barber(Character):
     def __init__(self, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)))
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)),
@@ -167,28 +192,38 @@ def death():
     print("ded :(")
 
 
-def checkCollision(player, enemies):
-    for enemy in enemies:
-        if player.invulnerability > 0:
-            break
-        if enemy.x+20 < player.x+92 < enemy.x + enemy.image.get_width() and (enemy.y < player.y < enemy.y + enemy.image.get_height() or enemy.y < player.y + 120< enemy.y + enemy.image.get_height()):
-            if player.health > 1:
-                player.health = max(1, player.health-enemy.damage)
+def checkCollision(player, characters):
+    for character in characters:
+        if not isinstance(character, GrowthSerum):
+            if player.invulnerability > 0:
+                continue
+            if character.x+20 < player.x+player.image.get_width() < character.x + character.image.get_width() and (
+                    character.y < player.y < character.y + character.image.get_height() or character.y < player.y + 120 < character.y + character.image.get_height()):
+                if player.health - character.damage > 0:
+                    player.health = max(1, player.health - character.damage)
+                    player.setImage()
+                else:
+                    death()
+                player.invulnerability = 100
+                player.hit_countdown = 20
+
+        else:
+            if (character.x + 20 < player.x < character.x + character.image.get_width() or character.x + 20 < player.x + player.image.get_width() < character.x + character.image.get_width()) and (
+                    character.y < player.y < character.y + character.image.get_height() or character.y < player.y + 120 < character.y + character.image.get_height()):
+                player.health = max(1, player.health - character.damage)
                 player.setImage()
-            else:
-                death()
-            player.invulnerability = 100
-            player.hit_countdown = 20
-            break
+                player.hit_countdown = -20
+                player.invulnerability = 100
+                characters.remove(character)
+                del character
 
-
-def redrawGameWindow(player, background, enemies, font):
+def redrawGameWindow(player, background, characters, font):
     win.fill((151, 123, 89))
     background.draw()
     health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
     win.blit(health, (18, 18))
-    for enemy in enemies:
-        enemy.draw()
+    for character in characters:
+        character.draw()
     player.draw()
     pygame.display.update()
 
@@ -200,17 +235,19 @@ def main():
     running = True
     player = Player()
     enemy_types = [Razor, Scissors]
-    enemies = []
+    serum_timer = random.randrange(2000, 3000)
+    characters = []
     # main loop
     while running:
         clock.tick(250)
-        if Enemies.spawn:
-            index = random.randint(0, len(enemy_types)-1)
+        if Character.spawn:
+            index = random.randint(0, len(enemy_types) - 1)
             y = 480
             if index == 1:
-                y = random.randrange(50, 340)
-            enemies.append(enemy_types[index](y))
-            Enemies.spawn = False
+                y = random.randrange(150, 350)
+            characters.append(enemy_types[index](y))
+            Character.spawn = False
+            # to make sure first enemy is not a barber
             if len(enemy_types) == 2:
                 enemy_types.append(Barber)
         # condition to quit program
@@ -232,26 +269,30 @@ def main():
                 player.y -= player.jump_velocity*0.1
                 player.jump_velocity -= 1
 
-        for enemy in enemies:
-            enemy.move()
-            if isinstance(enemy, Barber):
-                if enemy.throw_count == 250:
-                    enemies.append(Blade(enemy.x, enemy.y))
-                    enemy.throw_count = 0
-                enemy.throw_count += 1
-            if enemy.x < -enemy.image.get_width():
-                enemies.remove(enemy)
-                if not isinstance(enemy, Blade):
-                    Enemies.spawn = True
-                del enemy
+        for character in characters:
+            character.move()
+            if isinstance(character, Barber):
+                if character.throw_count == 250:
+                    characters.append(Blade(character.x, character.y))
+                    character.throw_count = 0
+                character.throw_count += 1
+            if character.x < -character.image.get_width():
+                characters.remove(character)
+                if not isinstance(character, Blade) and not isinstance(character, GrowthSerum):
+                    Character.spawn = True
+                del character
 
         if player.invulnerability > 0:
             player.invulnerability -= 1
         else:
-            checkCollision(player, enemies)
+            checkCollision(player, characters)
 
+        serum_timer -= 1
+        if serum_timer <= 0:
+            serum_timer = random.randrange(1000, 3000)
+            characters.append(GrowthSerum(random.randrange(250, 500)))
 
-        redrawGameWindow(player, background, enemies, font)
+        redrawGameWindow(player, background, characters, font)
 
 
 if __name__ == '__main__':

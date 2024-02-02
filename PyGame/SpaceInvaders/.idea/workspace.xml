@@ -5,9 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="baf467af-5c6b-4889-95a2-f70b26bb7187" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../BarberRun/images/level_2/stache_level_1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../BarberRun/images/level_3/stach_level_2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../BarberRun/images/level_4/stach_level_3.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../BarberRun/source/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../BarberRun/source/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
