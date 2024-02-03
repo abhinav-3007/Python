@@ -4,8 +4,7 @@ import pygame
 
 class Player:
     def __init__(self):
-        self.health = 8
-        self.level = 4
+        self.health = 4
         self.score = 0
         self.image = pygame.transform.scale(pygame.image.load(f'../images/level_4/man1.png'), (92, 120))
         self.injured = pygame.transform.scale(
@@ -22,46 +21,59 @@ class Player:
         self.jump_velocity = 70
         self.invulnerability = 0
         self.hit_countdown = 0
+        self.attack_countdown = 40
+        self.attack_cooldown = 0
+        self.hitbox = pygame.Rect(self.x + 20, self.y, 62, 120)
+        self.attack_hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
+
 
     def draw(self):
         self.image = self.sprites[self.image_count // 15]
-
         # iterating through various man sprites
         if self.image_count + 1 < len(self.sprites)*15:
             self.image_count += 1
         else:
             self.image_count = 0
 
+        if self.attack_countdown < 40:
+            if self.health > 1:
+                image_index = min(self.attack_countdown//10, len(self.attack_sprites)-1)
+                self.image = self.attack_sprites[image_index]
+            self.attack_countdown += 1
+            self.attack_cooldown = 400
+
         if self.hit_countdown > 0:
             self.image = self.injured
             self.hit_countdown = max(0, self.hit_countdown - 1)
-        if self.hit_countdown < 0:
+        elif self.hit_countdown < 0:
             self.image = self.healed
             self.hit_countdown = min(0, self.hit_countdown + 1)
+        self.hitbox = pygame.Rect(self.x + 20, self.y, 62, 120)
+        self.attack_hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
         win.blit(self.image, (self.x, self.y))
-    def setImage(self, is_growth_serum=False):
-        self.level = min((self.health+1)//2, 4)
+
+    def setImage(self):
         # loading the images for the player
-        self.sprites = [pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man1.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man2.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man3.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man4.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man5.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man6.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man7.png'), (92, 120)),
-                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.level}/man8.png'), (92, 120))]
+        self.sprites = [pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man1.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man2.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man3.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man4.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man5.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man6.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man7.png'), (92, 120)),
+                        pygame.transform.scale(pygame.image.load(f'../images/level_{self.health}/man8.png'), (92, 120))]
         self.attack_sprites.clear()
         # loading the images for when the player attacks
-        for i in range(2, self.level+1):
+        for i in range(2, self.health+1):
             length = 176 if i == 2 else 318 if i == 3 else 459
             self.attack_sprites.append(
                 pygame.transform.scale(pygame.image.load(f'../images/level_{i}/man_shooting.png'), (length, 120)))
         # loading image for when player is hit
         self.injured = pygame.transform.scale(
-            pygame.image.load(f'../images/level_{self.level}/man_hit.png'), (92, 120))
+            pygame.image.load(f'../images/level_{self.health}/man_hit.png'), (92, 120))
         # loading image for when player is healed
         self.healed = pygame.transform.scale(
-            pygame.image.load(f'../images/level_{self.level}/man_healed.png'), (92, 120))
+            pygame.image.load(f'../images/level_{self.health}/man_healed.png'), (92, 120))
 
 
 class Background:
@@ -91,18 +103,26 @@ class Character:
         self.x_velocity = 3
         self.y_velocity = 0
         self.damage = 1
+        self.hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
 
     def move(self):
         self.x -= self.x_velocity
         self.y -= self.y_velocity
+        self.hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
 
 
 class GrowthSerum(Character):
-    def __init__(self, y):
-        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (45, 80)))
-        self.damage = -2
+    def __init__(self, x, y, regen_amount, height):
+        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (0.5625*height, height)))
+        self.x = x
+        self.damage = -regen_amount
         self.x_velocity = 1.5
         self.image_count = 0
+
+    def move(self):
+        self.x -= self.x_velocity
+        self.y -= self.y_velocity
+        self.hitbox = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -177,11 +197,11 @@ class Barber(Character):
         self.image_count = 0
         self.x_velocity = 2
         self.throw_count = 250
+        self.throw_limit = 250
 
     def draw(self):
         win.blit(self.sprites[self.image_count // 20], (self.x, self.y))
-
-        # iterating through various man sprites
+        # iterating through various barber sprites
         if self.image_count + 1 < len(self.sprites) * 20:
             self.image_count += 1
         else:
@@ -197,20 +217,27 @@ def checkCollision(player, characters):
         if not isinstance(character, GrowthSerum):
             if player.invulnerability > 0:
                 continue
-            if character.x+20 < player.x+player.image.get_width() < character.x + character.image.get_width() and (
-                    character.y < player.y < character.y + character.image.get_height() or character.y < player.y + 120 < character.y + character.image.get_height()):
+
+            if player.attack_hitbox.colliderect(character.hitbox):
+                if player.attack_countdown < 40 and isinstance(character, Barber):
+                    characters.append(GrowthSerum(character.x, character.y, 2, 120))
+                    characters.remove(character)
+                    Character.spawn = True
+                    del character
+                    player.score += 3000
+                    continue
                 if player.health - character.damage > 0:
-                    player.health = max(1, player.health - character.damage)
-                    player.setImage()
+                    player.health = player.health - character.damage
                 else:
+                    player.health = 1
                     death()
+                player.setImage()
                 player.invulnerability = 100
                 player.hit_countdown = 20
 
         else:
-            if (character.x + 20 < player.x < character.x + character.image.get_width() or character.x + 20 < player.x + player.image.get_width() < character.x + character.image.get_width()) and (
-                    character.y < player.y < character.y + character.image.get_height() or character.y < player.y + 120 < character.y + character.image.get_height()):
-                player.health = max(1, player.health - character.damage)
+            if player.hitbox.colliderect(character.hitbox):
+                player.health = min(4, player.health - character.damage)
                 player.setImage()
                 player.hit_countdown = -20
                 player.invulnerability = 100
@@ -221,7 +248,12 @@ def redrawGameWindow(player, background, characters, font):
     win.fill((151, 123, 89))
     background.draw()
     health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
+    attack_status = "Unavailable" if player.health == 1 else "Ready" if not player.attack_cooldown else "Reloading"
+    cooldown = font.render(f"Attack {attack_status}", 1, (45, 56, 56))
+    score = font.render(f"Score {player.score//10}", 1, (45, 56, 56))
     win.blit(health, (18, 18))
+    win.blit(cooldown, (500-(cooldown.get_width()/2), 18))
+    win.blit(score, (1000-score.get_width()-18, 18))
     for character in characters:
         character.draw()
     player.draw()
@@ -235,11 +267,12 @@ def main():
     running = True
     player = Player()
     enemy_types = [Razor, Scissors]
-    serum_timer = random.randrange(2000, 3000)
+    serum_timer = random.randrange(3000, 4000)
+    timer = 250
     characters = []
     # main loop
     while running:
-        clock.tick(250)
+        clock.tick(timer)
         if Character.spawn:
             index = random.randint(0, len(enemy_types) - 1)
             y = 480
@@ -250,6 +283,9 @@ def main():
             # to make sure first enemy is not a barber
             if len(enemy_types) == 2:
                 enemy_types.append(Barber)
+            # to make sure barber doesnt come twice in a row
+            if index == 2:
+                enemy_types.remove(Barber)
         # condition to quit program
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,13 +304,18 @@ def main():
             else:
                 player.y -= player.jump_velocity*0.1
                 player.jump_velocity -= 1
+        if player.attack_cooldown > 0:
+            player.attack_cooldown -= 1
+        elif player.attack_countdown == 40 and keys[pygame.K_SPACE]:
+            player.attack_countdown = 0
 
         for character in characters:
             character.move()
             if isinstance(character, Barber):
-                if character.throw_count == 250:
+                if character.throw_count == character.throw_limit:
                     characters.append(Blade(character.x, character.y))
                     character.throw_count = 0
+                    character.throw_limit = random.randint(200, 300)
                 character.throw_count += 1
             if character.x < -character.image.get_width():
                 characters.remove(character)
@@ -290,8 +331,10 @@ def main():
         serum_timer -= 1
         if serum_timer <= 0:
             serum_timer = random.randrange(1000, 3000)
-            characters.append(GrowthSerum(random.randrange(250, 500)))
+            characters.append(GrowthSerum(1000, random.randrange(250, 500), 1, 80))
 
+        timer += 0.0000000001
+        player.score += 1
         redrawGameWindow(player, background, characters, font)
 
 

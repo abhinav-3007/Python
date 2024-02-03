@@ -1,4 +1,4 @@
-import wikipediaapi
+ = Falseimport wikipediaapi
 
 wiki_wiki = wikipediaapi.Wikipedia("en")
 
