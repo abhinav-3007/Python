@@ -113,7 +113,7 @@ class Character:
 
 class GrowthSerum(Character):
     def __init__(self, x, y, regen_amount, height):
-        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (0.5625*height, height)))
+        super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (int(round(0.5625*height)), height)))
         self.x = x
         self.damage = -regen_amount
         self.x_velocity = 1.5
@@ -217,21 +217,31 @@ def countdown(player, background, characters, font):
         pygame.time.wait(1000)
 
 
-def homeScreen(events, font):
-    win.fill((151, 123, 89))
-    title = font.render("BARBER RUN", 1, (0, 0, 0))
-    start = font.render("Start", 1, (0, 0, 0))
+def homeScreen(events, start_font):
+    title_font = pygame.font.Font('../fonts/ArcadeFont.ttf', 40)
+    win.fill((89, 112, 112))
+    title = title_font.render("BARBER RUN", 1, (113, 68, 47))
+    start = start_font.render("Start", 1, (0, 0, 0))
     start_button = pygame.Rect((480 - start.get_width() / 2, 330 - start.get_height(),
                                 start.get_width() + 40, start.get_height() + 40))
     # changing colour if mouse hovering over play again button
     if start_button.collidepoint(pygame.mouse.get_pos()):
-        start = font.render(f"Start", 1, (0, 200, 0))
+        start = start_font.render(f"Start", 1, (125, 255, 71))
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 return True
 
+    razor = pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (118, 200))
+    scissor = pygame.transform.rotate(pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (300, 171)), 300)
+    blade = pygame.transform.rotate(pygame.transform.scale(pygame.image.load('../images/enemies/blade.png'), (79, 100)), 340)
+    mustache = pygame.transform.rotate(pygame.transform.scale(pygame.image.load('../images/icon.png'), (70, 70)), 340)
+
     win.blit(title, (500 - title.get_width() / 2, 300 - title.get_height()))
     win.blit(start, (500 - start.get_width() / 2, 350 - start.get_height()))
+    win.blit(mustache, (860 - title.get_width() / 2, 240 - title.get_height()))
+    win.blit(razor, (100, 200))
+    win.blit(scissor, (700, 20))
+    win.blit(blade, (600, 450))
     pygame.display.update()
     return False
 
@@ -314,6 +324,7 @@ def checkCollision(player, characters):
                 characters.remove(character)
                 del character
     return False
+
 
 def redrawGameWindow(player, background, characters, font):
     win.fill((151, 123, 89))
