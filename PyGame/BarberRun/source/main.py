@@ -208,8 +208,27 @@ class Barber(Character):
             self.image_count = 0
 
 
-def death():
-    print("ded :(")
+def deadScreen(player, events, font):
+    death_screen = pygame.Surface((1000, 650))
+    death_screen.set_alpha(5)
+    death_screen.fill((128, 0, 0))
+    game_over = font.render("YOU LOST YOUR MUSTACHE :(", 1, (20, 0, 0))
+    score = font.render(f"Score: {player.score // 10}", 1, (20, 0, 0))
+    play_again = font.render(f"Play Again", 1, (20, 0, 0))
+    play_again_button = pygame.Rect((480 - play_again.get_width() / 2, 330 - play_again.get_height(),
+                                     play_again.get_width() + 40, play_again.get_height() + 40))
+    # changing colour if mouse hovering over play again button
+    if play_again_button.collidepoint(pygame.mouse.get_pos()):
+        play_again = font.render(f"Play Again", 1, (255, 255, 255))
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                main()
+
+    death_screen.blit(game_over, (500 - game_over.get_width() / 2, 300 - game_over.get_height()))
+    death_screen.blit(score, (500 - score.get_width() / 2, 325 - score.get_height()))
+    death_screen.blit(play_again, (500 - play_again.get_width() / 2, 350 - play_again.get_height()))
+    win.blit(death_screen, (0, 0))
+    pygame.display.update()
 
 
 def checkCollision(player, characters):
@@ -230,7 +249,7 @@ def checkCollision(player, characters):
                     player.health = player.health - character.damage
                 else:
                     player.health = 1
-                    death()
+                    return True
                 player.setImage()
                 player.invulnerability = 100
                 player.hit_countdown = 20
@@ -243,6 +262,7 @@ def checkCollision(player, characters):
                 player.invulnerability = 100
                 characters.remove(character)
                 del character
+    return False
 
 def redrawGameWindow(player, background, characters, font):
     win.fill((151, 123, 89))
@@ -250,7 +270,7 @@ def redrawGameWindow(player, background, characters, font):
     health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
     attack_status = "Unavailable" if player.health == 1 else "Ready" if not player.attack_cooldown else "Reloading"
     cooldown = font.render(f"Attack {attack_status}", 1, (45, 56, 56))
-    score = font.render(f"Score {player.score//10}", 1, (45, 56, 56))
+    score = font.render(f"Score: {player.score//10}", 1, (45, 56, 56))
     win.blit(health, (18, 18))
     win.blit(cooldown, (500-(cooldown.get_width()/2), 18))
     win.blit(score, (1000-score.get_width()-18, 18))
@@ -270,73 +290,78 @@ def main():
     serum_timer = random.randrange(3000, 4000)
     timer = 250
     characters = []
+    dead = False
+    Character.spawn = True
     # main loop
     while running:
         clock.tick(timer)
-        if Character.spawn:
-            index = random.randint(0, len(enemy_types) - 1)
-            y = 480
-            if index == 1:
-                y = random.randrange(150, 350)
-            characters.append(enemy_types[index](y))
-            Character.spawn = False
-            # to make sure first enemy is not a barber
-            if len(enemy_types) == 2:
-                enemy_types.append(Barber)
-            # to make sure barber doesnt come twice in a row
-            if index == 2:
-                enemy_types.remove(Barber)
         # condition to quit program
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
-
-        keys = pygame.key.get_pressed()
-
-        # making the player jump if UP key is pressed
-        if not player.isJump:
-            if keys[pygame.K_UP]:
-                player.isJump = True
+        if dead:
+            deadScreen(player, events, font)
         else:
-            if player.jump_velocity < -70:
-                player.isJump = False
-                player.jump_velocity = 70
+            if Character.spawn:
+                index = random.randint(0, len(enemy_types) - 1)
+                y = 480
+                if index == 1:
+                    y = random.randrange(150, 350)
+                characters.append(enemy_types[index](y))
+                Character.spawn = False
+                # to make sure first enemy is not a barber
+                if len(enemy_types) == 2:
+                    enemy_types.append(Barber)
+                # to make sure barber doesnt come twice in a row
+                if index == 2:
+                    enemy_types.remove(Barber)
+
+            keys = pygame.key.get_pressed()
+
+            # making the player jump if UP key is pressed
+            if not player.isJump:
+                if keys[pygame.K_UP]:
+                    player.isJump = True
             else:
-                player.y -= player.jump_velocity*0.1
-                player.jump_velocity -= 1
-        if player.attack_cooldown > 0:
-            player.attack_cooldown -= 1
-        elif player.attack_countdown == 40 and keys[pygame.K_SPACE]:
-            player.attack_countdown = 0
+                if player.jump_velocity < -70:
+                    player.isJump = False
+                    player.jump_velocity = 70
+                else:
+                    player.y -= player.jump_velocity*0.1
+                    player.jump_velocity -= 1
+            if player.attack_cooldown > 0:
+                player.attack_cooldown -= 1
+            elif player.attack_countdown == 40 and keys[pygame.K_SPACE]:
+                player.attack_countdown = 0
 
-        for character in characters:
-            character.move()
-            if isinstance(character, Barber):
-                if character.throw_count == character.throw_limit:
-                    characters.append(Blade(character.x, character.y))
-                    character.throw_count = 0
-                    character.throw_limit = random.randint(200, 300)
-                character.throw_count += 1
-            if character.x < -character.image.get_width():
-                characters.remove(character)
-                if not isinstance(character, Blade) and not isinstance(character, GrowthSerum):
-                    Character.spawn = True
-                del character
+            for character in characters:
+                character.move()
+                if isinstance(character, Barber):
+                    if character.throw_count == character.throw_limit:
+                        characters.append(Blade(character.x, character.y))
+                        character.throw_count = 0
+                        character.throw_limit = random.randint(200, 300)
+                    character.throw_count += 1
+                if character.x < -character.image.get_width():
+                    characters.remove(character)
+                    if not isinstance(character, Blade) and not isinstance(character, GrowthSerum):
+                        Character.spawn = True
+                    del character
 
-        if player.invulnerability > 0:
-            player.invulnerability -= 1
-        else:
-            checkCollision(player, characters)
+            if player.invulnerability > 0:
+                player.invulnerability -= 1
+            else:
+                dead = checkCollision(player, characters)
 
-        serum_timer -= 1
-        if serum_timer <= 0:
-            serum_timer = random.randrange(1000, 3000)
-            characters.append(GrowthSerum(1000, random.randrange(250, 500), 1, 80))
+            serum_timer -= 1
+            if serum_timer <= 0:
+                serum_timer = random.randrange(1000, 3000)
+                characters.append(GrowthSerum(1000, random.randrange(250, 500), 1, 80))
 
-        timer += 0.0000000001
-        player.score += 1
-        redrawGameWindow(player, background, characters, font)
-
+            timer += 0.000000001
+            player.score += 1
+            redrawGameWindow(player, background, characters, font)
 
 if __name__ == '__main__':
     pygame.init()
