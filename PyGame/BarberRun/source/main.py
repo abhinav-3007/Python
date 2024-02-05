@@ -25,6 +25,7 @@ class Player:
         self.attack_cooldown = 0
         self.hitbox = pygame.Rect(self.x + 20, self.y, 62, 120)
         self.attack_hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
+        self.sound = pygame.mixer.Sound('../audio/whip.mp3')
 
 
     def draw(self):
@@ -82,25 +83,29 @@ class Background:
         self.image = pygame.transform.scale(pygame.image.load('../images/bg.png'), (self.image_width, 600))
         self.x = 0
         self.y = 50
+        self.velocity = 1.5
     
-    def draw(self):
+    def draw(self, move):
         win.blit(self.image, (self.x, self.y))
         win.blit(self.image, (self.x + self.image_width, self.y))
         win.blit(self.image, (self.x + self.image_width*2, self.y))
-        if self.x+1 <= -self.image_width:
-            self.x = 0
-        else:
-            self.x -= 1.5
+        if move:
+            if self.x+self.velocity <= -self.image_width:
+                self.x = 0
+            else:
+                self.x -= self.velocity
+
+
 
 
 class Character:
     spawn = True
+    x_velocity = 3
     def __init__(self, y, image):
         # placeholder image
         self.image = image
         self.x = 1000
         self.y = y
-        self.x_velocity = 3
         self.y_velocity = 0
         self.damage = 1
         self.hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
@@ -112,12 +117,13 @@ class Character:
 
 
 class GrowthSerum(Character):
+    x_velocity = 1.5
     def __init__(self, x, y, regen_amount, height):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/growth_serum.png'), (int(round(0.5625*height)), height)))
         self.x = x
         self.damage = -regen_amount
-        self.x_velocity = 1.5
         self.image_count = 0
+        self.sound = pygame.mixer.Sound('../audio/growth_serum.mp3')
 
     def move(self):
         self.x -= self.x_velocity
@@ -140,6 +146,7 @@ class Razor(Character):
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (83, 140)),
                         pygame.transform.scale(pygame.image.load('../images/enemies/razor2.png'), (83, 140))]
         self.image_count = 0
+        self.sound = pygame.mixer.Sound('../audio/razor.mp3')
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -152,13 +159,14 @@ class Razor(Character):
 
 
 class Scissors(Character):
+    x_velocity = 5
     def __init__(self, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)))
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (245, 140)),
                              pygame.transform.scale(pygame.image.load('../images/enemies/scissors2.png'), (245, 140))]
-        self.image_count = 0
-        self.x_velocity = 5
+        self.image_count = 40
         self.damage = 2
+        self.sound = pygame.mixer.Sound("../audio/scissor.mp3")
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -166,16 +174,18 @@ class Scissors(Character):
         if self.image_count == 40:
             self.image = self.sprites[0]
         elif self.image_count == 80:
+            self.sound.play()
             self.image = self.sprites[1]
             self.image_count = 0
 
 class Blade(Character):
+    x_velocity = 7
     def __init__(self, x, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/blade.png'), (60, 76)))
         self.x = x
-        self.x_velocity = 7
-        self.damage = 2
+        self.damage = 1
         self.image_count = 0
+        self.sound = pygame.mixer.Sound('../audio/blade_hit.mp3')
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -186,6 +196,7 @@ class Blade(Character):
 
 
 class Barber(Character):
+    x_velocity = 2
     def __init__(self, y):
         super().__init__(y, pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)))
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/barber1.png'), (88, 140)),
@@ -195,9 +206,10 @@ class Barber(Character):
                         pygame.transform.scale(pygame.image.load('../images/enemies/barber5.png'), (88, 140)),
                         pygame.transform.scale(pygame.image.load('../images/enemies/barber6.png'), (88, 140))]
         self.image_count = 0
-        self.x_velocity = 2
         self.throw_count = 250
         self.throw_limit = 250
+        self.throw_sound = pygame.mixer.Sound('../audio/blade_throw.mp3')
+        self.sound = pygame.mixer.Sound('../audio/blade_hit.mp3')
 
     def draw(self):
         win.blit(self.sprites[self.image_count // 20], (self.x, self.y))
@@ -210,7 +222,7 @@ class Barber(Character):
 
 def countdown(player, background, characters, font):
     for i in range(3, 0, -1):
-        redrawGameWindow(player, background, characters, font)
+        redrawGameWindow(player, background, characters, font, False)
         counter = font.render(f"{i}", 1, (255, 255, 255))
         win.blit(counter, (500 - counter.get_width() / 2, 350 - counter.get_height()))
         pygame.display.update()
@@ -295,10 +307,11 @@ def deadScreen(player, events, font):
 def checkCollision(player, characters):
     for character in characters:
         if not isinstance(character, GrowthSerum):
-            if player.invulnerability > 0:
+            if player.invulnerability > 0 and player.attack_countdown == 40:
                 continue
 
             if player.attack_hitbox.colliderect(character.hitbox):
+                character.sound.play(maxtime=200)
                 if player.attack_countdown < 40 and isinstance(character, Barber):
                     characters.append(GrowthSerum(character.x, character.y, 2, 120))
                     characters.remove(character)
@@ -309,7 +322,9 @@ def checkCollision(player, characters):
                 if player.health > 1:
                     player.health = max(1, player.health - character.damage)
                 else:
-                    player.health = 1
+                    player.health = 0
+                    pygame.mixer.music.load("../audio/dead.mp3")
+                    pygame.mixer.music.play(-1)
                     return True
                 player.setImage()
                 player.invulnerability = 100
@@ -317,6 +332,8 @@ def checkCollision(player, characters):
 
         else:
             if player.hitbox.colliderect(character.hitbox):
+                if player.health < 4:
+                    character.sound.play()
                 player.health = min(4, player.health - character.damage)
                 player.setImage()
                 player.hit_countdown = -20
@@ -326,9 +343,11 @@ def checkCollision(player, characters):
     return False
 
 
-def redrawGameWindow(player, background, characters, font):
+def redrawGameWindow(player, background, characters, font, move_background=True):
     win.fill((151, 123, 89))
-    background.draw()
+    if move_background:
+        background.velocity += 0.0001
+    background.draw(move_background)
     health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
     attack_status = "Unavailable" if player.health == 1 else "Ready" if not player.attack_cooldown else "Reloading"
     cooldown = font.render(f"Attack {attack_status}", 1, (45, 56, 56))
@@ -344,13 +363,15 @@ def redrawGameWindow(player, background, characters, font):
 
 def main():
     font = pygame.font.Font("../fonts/ArcadeFont.ttf", 20)
+    pygame.mixer.music.load("../audio/music.ogg")
+    pygame.mixer.music.set_volume(0.2)
+    pygame.mixer.music.play(-1)
     background = Background()
     clock = pygame.time.Clock()
     running = True
     player = Player()
     enemy_types = [Razor, Scissors]
     serum_timer = random.randrange(3000, 4000)
-    timer = 250
     characters = []
     dead = False
     pause = False
@@ -358,7 +379,7 @@ def main():
     Character.spawn = True
     # main loop
     while running:
-        clock.tick(timer)
+        clock.tick(250)
         # condition to quit program
         events = pygame.event.get()
         for event in events:
@@ -376,8 +397,7 @@ def main():
         elif pause:
             pause = pauseScreen(events, font)
             if not pause:
-                    countdown(player, background, characters, font)
-
+                countdown(player, background, characters, font)
         else:
             if Character.spawn:
                 index = random.randint(0, len(enemy_types) - 1)
@@ -411,13 +431,22 @@ def main():
                     player.jump_velocity -= 1
             if player.attack_cooldown > 0:
                 player.attack_cooldown -= 1
-            elif player.attack_countdown == 40 and keys[pygame.K_SPACE]:
+            elif player.attack_countdown == 40 and keys[pygame.K_SPACE] and player.health > 1:
+                player.sound.play()
                 player.attack_countdown = 0
+
+            Barber.x_velocity += 0.0001
+            Scissors.x_velocity += 0.0001
+            Razor.x_velocity += 0.0001
+            Blade.x_velocity += 0.0001
+            GrowthSerum.x_velocity += 0.0001
 
             for character in characters:
                 character.move()
                 if isinstance(character, Barber):
                     if character.throw_count == character.throw_limit:
+                        character.throw_sound.play()
+                        character.throw_sound.fadeout(1000)
                         characters.append(Blade(character.x, character.y))
                         character.throw_count = 0
                         character.throw_limit = random.randint(200, 300)
@@ -438,7 +467,6 @@ def main():
                 serum_timer = random.randrange(1000, 3000)
                 characters.append(GrowthSerum(1000, random.randrange(250, 500), 1, 80))
 
-            timer += 0.000000001
             player.score += 1
             redrawGameWindow(player, background, characters, font)
 
@@ -452,6 +480,7 @@ if __name__ == '__main__':
     win = pygame.display.set_mode((sc_width, sc_height))
     pygame.display.set_caption("Barber Run")
     pygame.display.set_icon(pygame.image.load('../images/icon.png'))
+
 
     # calling main loop
     main()
