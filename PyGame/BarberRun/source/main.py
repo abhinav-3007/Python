@@ -25,7 +25,9 @@ class Player:
         self.attack_cooldown = 0
         self.hitbox = pygame.Rect(self.x + 20, self.y, 62, 120)
         self.attack_hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
-        self.sound = pygame.mixer.Sound('../audio/whip.mp3')
+        self.sound = pygame.mixer.Sound('../audio/whip.wav')
+        with open('high_score.txt', 'r') as high_score:
+            self.high_score = int(high_score.read())
 
 
     def draw(self):
@@ -123,7 +125,7 @@ class GrowthSerum(Character):
         self.x = x
         self.damage = -regen_amount
         self.image_count = 0
-        self.sound = pygame.mixer.Sound('../audio/growth_serum.mp3')
+        self.sound = pygame.mixer.Sound('../audio/growth_serum.wav')
 
     def move(self):
         self.x -= self.x_velocity
@@ -146,7 +148,7 @@ class Razor(Character):
         self.sprites = [pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (83, 140)),
                         pygame.transform.scale(pygame.image.load('../images/enemies/razor2.png'), (83, 140))]
         self.image_count = 0
-        self.sound = pygame.mixer.Sound('../audio/razor.mp3')
+        self.sound = pygame.mixer.Sound('../audio/razor.wav')
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -166,7 +168,7 @@ class Scissors(Character):
                              pygame.transform.scale(pygame.image.load('../images/enemies/scissors2.png'), (245, 140))]
         self.image_count = 40
         self.damage = 2
-        self.sound = pygame.mixer.Sound("../audio/scissor.mp3")
+        self.sound = pygame.mixer.Sound("../audio/scissor.wav")
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -185,7 +187,7 @@ class Blade(Character):
         self.x = x
         self.damage = 1
         self.image_count = 0
-        self.sound = pygame.mixer.Sound('../audio/blade_hit.mp3')
+        self.sound = pygame.mixer.Sound('../audio/blade_hit.wav')
 
     def draw(self):
         win.blit(self.image, (self.x, self.y))
@@ -208,8 +210,8 @@ class Barber(Character):
         self.image_count = 0
         self.throw_count = 250
         self.throw_limit = 250
-        self.throw_sound = pygame.mixer.Sound('../audio/blade_throw.mp3')
-        self.sound = pygame.mixer.Sound('../audio/blade_hit.mp3')
+        self.throw_sound = pygame.mixer.Sound('../audio/blade_throw.wav')
+        self.sound = pygame.mixer.Sound('../audio/blade_hit.wav')
 
     def draw(self):
         win.blit(self.sprites[self.image_count // 20], (self.x, self.y))
@@ -286,8 +288,13 @@ def deadScreen(player, events, font):
     death_screen.fill((128, 0, 0))
     game_over = font.render("YOU LOST YOUR MUSTACHE :(", 1, (20, 0, 0))
     score = font.render(f"Score: {player.score // 10}", 1, (20, 0, 0))
+    high_score = font.render(f"High Score: {player.high_score}", 1, (20, 0, 0))
+    if player.high_score < player.score // 10:
+        high_score = font.render("New High Score!!", 1, (20, 0, 0))
+        with open('high_score.txt', 'w') as high_score_file:
+            high_score_file.write(str(player.score//10))
     play_again = font.render(f"Play Again", 1, (20, 0, 0))
-    play_again_button = pygame.Rect((480 - play_again.get_width() / 2, 330 - play_again.get_height(),
+    play_again_button = pygame.Rect((480 - play_again.get_width() / 2, 355 - play_again.get_height(),
                                      play_again.get_width() + 40, play_again.get_height() + 40))
     # changing colour if mouse hovering over play again button
     if play_again_button.collidepoint(pygame.mouse.get_pos()):
@@ -298,7 +305,8 @@ def deadScreen(player, events, font):
 
     death_screen.blit(game_over, (500 - game_over.get_width() / 2, 300 - game_over.get_height()))
     death_screen.blit(score, (500 - score.get_width() / 2, 325 - score.get_height()))
-    death_screen.blit(play_again, (500 - play_again.get_width() / 2, 350 - play_again.get_height()))
+    death_screen.blit(high_score, (500 - high_score.get_width() / 2, 350 - high_score.get_height()))
+    death_screen.blit(play_again, (500 - play_again.get_width() / 2, 375 - play_again.get_height()))
     win.blit(death_screen, (0, 0))
     pygame.display.update()
     return True
@@ -345,16 +353,13 @@ def checkCollision(player, characters):
 
 def redrawGameWindow(player, background, characters, font, move_background=True):
     win.fill((151, 123, 89))
-    if move_background:
-        background.velocity += 0.0001
     background.draw(move_background)
     health = font.render(f"Health: {player.health}", 1, (45, 56, 56))
-    attack_status = "Unavailable" if player.health == 1 else "Ready" if not player.attack_cooldown else "Reloading"
-    cooldown = font.render(f"Attack {attack_status}", 1, (45, 56, 56))
-    score = font.render(f"Score: {player.score//10}", 1, (45, 56, 56))
+    score = font.render(f"Score: {player.score // 10}", 1, (45, 56, 56))
+    high_score = font.render(f"High Score: {player.high_score}", 1, (45, 56, 56))
     win.blit(health, (18, 18))
-    win.blit(cooldown, (500-(cooldown.get_width()/2), 18))
-    win.blit(score, (1000-score.get_width()-18, 18))
+    win.blit(score, (500 - (score.get_width() / 2), 18))
+    win.blit(high_score, (1000 - high_score.get_width() - 18, 18))
     for character in characters:
         character.draw()
     player.draw()
@@ -377,9 +382,10 @@ def main():
     pause = False
     start = False
     Character.spawn = True
+    timer = 250
     # main loop
     while running:
-        clock.tick(250)
+        clock.tick(timer)
         # condition to quit program
         events = pygame.event.get()
         for event in events:
@@ -435,12 +441,6 @@ def main():
                 player.sound.play()
                 player.attack_countdown = 0
 
-            Barber.x_velocity += 0.0001
-            Scissors.x_velocity += 0.0001
-            Razor.x_velocity += 0.0001
-            Blade.x_velocity += 0.0001
-            GrowthSerum.x_velocity += 0.0001
-
             for character in characters:
                 character.move()
                 if isinstance(character, Barber):
@@ -468,6 +468,7 @@ def main():
                 characters.append(GrowthSerum(1000, random.randrange(250, 500), 1, 80))
 
             player.score += 1
+            timer += 0.000000001
             redrawGameWindow(player, background, characters, font)
 
 if __name__ == '__main__':
