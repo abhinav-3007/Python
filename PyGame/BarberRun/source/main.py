@@ -28,7 +28,10 @@ class Player:
         self.sound = pygame.mixer.Sound('../audio/whip.wav')
         with open('high_score.txt', 'r') as high_score:
             self.high_score = int(high_score.read())
-
+        self.dead = False
+        self.pause = False
+        self.start = False
+        self.instructions = False
 
     def draw(self):
         self.image = self.sprites[self.image_count // 15]
@@ -96,8 +99,6 @@ class Background:
                 self.x = 0
             else:
                 self.x -= self.velocity
-
-
 
 
 class Character:
@@ -180,6 +181,7 @@ class Scissors(Character):
             self.image = self.sprites[1]
             self.image_count = 0
 
+
 class Blade(Character):
     x_velocity = 7
     def __init__(self, x, y):
@@ -231,19 +233,64 @@ def countdown(player, background, characters, font):
         pygame.time.wait(1000)
 
 
-def homeScreen(events, start_font):
+def instructions(events, font, player):
+    instructions_screen = pygame.Surface((1000, 650))
+    instructions_screen.fill((89, 112, 112))
+    title = font.render("SAVE YOUR MUSTACHE!", 1, (20, 0, 0))
+    jump1 = font.render("Avoid the Barber's vicious attacks", 1, (20, 0, 0))
+    jump2 = font.render("by jumping using the UP arrow key!", 1, (20, 0, 0))
+
+    whip1 = font.render("Use your mustache to whip the barber using", 1, (20, 0, 0))
+    whip2 = font.render("the SPACE key to get extra points and health!", 1, (20, 0, 0))
+
+    back = font.render("BACK", 1, (20, 0, 0))
+    back_button = pygame.Rect((480 - back.get_width() / 2, 390 - back.get_height(),
+                                     back.get_width() + 40, back.get_height() + 40))
+    # changing colour if mouse hovering over play again button
+    if back_button.collidepoint(pygame.mouse.get_pos()):
+        back = font.render("BACK", 1, (0, 128, 0))
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                player.instructions = False
+                return 0
+
+    instructions_screen.blit(title, (500 - title.get_width() / 2, 200 - title.get_height()))
+    instructions_screen.blit(jump1, (500 - jump1.get_width() / 2, 250 - jump1.get_height()))
+    instructions_screen.blit(jump2, (500 - jump2.get_width() / 2, 280 - jump2.get_height()))
+    instructions_screen.blit(whip1, (500 - whip1.get_width() / 2, 330 - whip1.get_height()))
+    instructions_screen.blit(whip2, (500 - whip2.get_width() / 2, 360 - whip2.get_height()))
+    instructions_screen.blit(back, (500 - back.get_width() / 2, 410 - back.get_height()))
+    win.blit(instructions_screen, (0, 0))
+    pygame.display.update()
+    player.instructions = True
+
+
+def homeScreen(events, start_font, player):
     title_font = pygame.font.Font('../fonts/ArcadeFont.ttf', 40)
     win.fill((89, 112, 112))
     title = title_font.render("BARBER RUN", 1, (113, 68, 47))
+    how_to_play = start_font.render("How to Play", 1, (0, 0, 0))
     start = start_font.render("Start", 1, (0, 0, 0))
-    start_button = pygame.Rect((480 - start.get_width() / 2, 330 - start.get_height(),
+    how_to_play_button = pygame.Rect((480 - how_to_play.get_width() / 2, 330 - how_to_play.get_height(),
+                                how_to_play.get_width() + 40, how_to_play.get_height() + 40))
+    start_button = pygame.Rect((480 - start.get_width() / 2, 380 - start.get_height(),
                                 start.get_width() + 40, start.get_height() + 40))
-    # changing colour if mouse hovering over play again button
-    if start_button.collidepoint(pygame.mouse.get_pos()):
-        start = start_font.render(f"Start", 1, (125, 255, 71))
+
+    # changing colour if mouse hovering over how to play button
+    if how_to_play_button.collidepoint(pygame.mouse.get_pos()):
+        how_to_play = start_font.render("How to Play", 1, (255, 255, 255))
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                return True
+                player.instructions = True
+                return 0
+
+    # changing colour if mouse hovering over start button
+    if start_button.collidepoint(pygame.mouse.get_pos()):
+        start = start_font.render("Start", 1, (125, 255, 71))
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                player.start = True
+                return 0
 
     razor = pygame.transform.scale(pygame.image.load('../images/enemies/razor1.png'), (118, 200))
     scissor = pygame.transform.rotate(pygame.transform.scale(pygame.image.load('../images/enemies/scissors1.png'), (300, 171)), 300)
@@ -251,35 +298,51 @@ def homeScreen(events, start_font):
     mustache = pygame.transform.rotate(pygame.transform.scale(pygame.image.load('../images/icon.png'), (70, 70)), 340)
 
     win.blit(title, (500 - title.get_width() / 2, 300 - title.get_height()))
-    win.blit(start, (500 - start.get_width() / 2, 350 - start.get_height()))
+    win.blit(how_to_play, (500 - how_to_play.get_width() / 2, 350 - how_to_play.get_height()))
+    win.blit(start, (500 - start.get_width() / 2, 400 - start.get_height()))
+
     win.blit(mustache, (860 - title.get_width() / 2, 240 - title.get_height()))
     win.blit(razor, (100, 200))
     win.blit(scissor, (700, 20))
     win.blit(blade, (600, 450))
     pygame.display.update()
-    return False
+    player.start = False
 
 
-def pauseScreen(events, font):
-    death_screen = pygame.Surface((1000, 650))
-    death_screen.set_alpha(5)
-    death_screen.fill((255, 255, 255))
+def pauseScreen(events, font, player):
+    pause_screen = pygame.Surface((1000, 650))
+    pause_screen.set_alpha(5)
+    pause_screen.fill((255, 255, 255))
     game_over = font.render("PAUSED", 1, (20, 0, 0))
-    play_again = font.render("Resume", 1, (20, 0, 0))
-    play_again_button = pygame.Rect((480 - play_again.get_width() / 2, 330 - play_again.get_height(),
-                                     play_again.get_width() + 40, play_again.get_height() + 40))
-    # changing colour if mouse hovering over play again button
-    if play_again_button.collidepoint(pygame.mouse.get_pos()):
-        play_again = font.render(f"Resume", 1, (0, 128, 0))
+    how_to_play = font.render("How to Play", 1, (20, 0, 0))
+    resume = font.render("Resume", 1, (20, 0, 0))
+    how_to_play_button = pygame.Rect((480 - how_to_play.get_width() / 2, 330 - how_to_play.get_height(),
+                                 how_to_play.get_width() + 40, how_to_play.get_height() + 40))
+    resume_button = pygame.Rect((480 - resume.get_width() / 2, 380 - resume.get_height(),
+                                 resume.get_width() + 40, resume.get_height() + 40))
+
+    # changing colour if mouse hovering over how to play button
+    if how_to_play_button.collidepoint(pygame.mouse.get_pos()):
+        how_to_play = font.render(f"How to Play", 1, (0, 128, 0))
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                return False
+                player.instructions = True
+                return 0
 
-    death_screen.blit(game_over, (500 - game_over.get_width() / 2, 300 - game_over.get_height()))
-    death_screen.blit(play_again, (500 - play_again.get_width() / 2, 350 - play_again.get_height()))
-    win.blit(death_screen, (0, 0))
+    # changing colour if mouse hovering over resume button
+    if resume_button.collidepoint(pygame.mouse.get_pos()):
+        resume = font.render(f"Resume", 1, (0, 128, 0))
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                player.pause = False
+                return 0
+
+    pause_screen.blit(game_over, (500 - game_over.get_width() / 2, 300 - game_over.get_height()))
+    pause_screen.blit(how_to_play, (500 - how_to_play.get_width() / 2, 350 - how_to_play.get_height()))
+    pause_screen.blit(resume, (500 - resume.get_width() / 2, 400 - resume.get_height()))
+    win.blit(pause_screen, (0, 0))
     pygame.display.update()
-    return True
+    player.pause = True
 
 
 def deadScreen(player, events, font):
@@ -301,7 +364,8 @@ def deadScreen(player, events, font):
         play_again = font.render(f"Play Again", 1, (255, 255, 255))
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                return False
+                player.dead = False
+                return 0
 
     death_screen.blit(game_over, (500 - game_over.get_width() / 2, 300 - game_over.get_height()))
     death_screen.blit(score, (500 - score.get_width() / 2, 325 - score.get_height()))
@@ -309,7 +373,7 @@ def deadScreen(player, events, font):
     death_screen.blit(play_again, (500 - play_again.get_width() / 2, 375 - play_again.get_height()))
     win.blit(death_screen, (0, 0))
     pygame.display.update()
-    return True
+    player.dead = True
 
 
 def checkCollision(player, characters):
@@ -321,7 +385,7 @@ def checkCollision(player, characters):
             if player.attack_hitbox.colliderect(character.hitbox):
                 character.sound.play(maxtime=200)
                 if player.attack_countdown < 40 and isinstance(character, Barber):
-                    characters.append(GrowthSerum(character.x, character.y, 2, 120))
+                    characters.append(GrowthSerum(character.x, character.y, 1, 80))
                     characters.remove(character)
                     Character.spawn = True
                     del character
@@ -333,7 +397,8 @@ def checkCollision(player, characters):
                     player.health = 0
                     pygame.mixer.music.load("../audio/dead.mp3")
                     pygame.mixer.music.play(-1)
-                    return True
+                    player.dead = True
+                    return 0
                 player.setImage()
                 player.invulnerability = 100
                 player.hit_countdown = 20
@@ -348,7 +413,7 @@ def checkCollision(player, characters):
                 player.invulnerability = 100
                 characters.remove(character)
                 del character
-    return False
+    player.dead = False
 
 
 def redrawGameWindow(player, background, characters, font, move_background=True):
@@ -378,9 +443,6 @@ def main():
     enemy_types = [Razor, Scissors]
     serum_timer = random.randrange(3000, 4000)
     characters = []
-    dead = False
-    pause = False
-    start = False
     Character.spawn = True
     timer = 250
     # main loop
@@ -391,18 +453,20 @@ def main():
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
-        if not start:
-            start = homeScreen(events, font)
-            if start:
+        if player.instructions:
+            instructions(events,font, player)
+        elif not player.start:
+            homeScreen(events, font, player)
+            if player.start:
                 countdown(player, background, characters, font)
-        elif dead:
-            dead = deadScreen(player, events, font)
-            if not dead:
+        elif player.dead:
+            deadScreen(player, events, font)
+            if not player.dead:
                 main()
                 break
-        elif pause:
-            pause = pauseScreen(events, font)
-            if not pause:
+        elif player.pause:
+            pauseScreen(events, font, player)
+            if not player.pause:
                 countdown(player, background, characters, font)
         else:
             if Character.spawn:
@@ -422,7 +486,7 @@ def main():
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_ESCAPE]:
-                pause = True
+                player.pause = True
 
             # making the player jump if UP key is pressed
             if not player.isJump:
@@ -460,7 +524,7 @@ def main():
             if player.invulnerability > 0:
                 player.invulnerability -= 1
             else:
-                dead = checkCollision(player, characters)
+                checkCollision(player, characters)
 
             serum_timer -= 1
             if serum_timer <= 0:
