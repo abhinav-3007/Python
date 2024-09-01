@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block contents %}
+<div class="card">
+    <div class="card-body">
+        <img class="rounded-circle mx-auto d-block" style="width:150px; height:150px;" src="{{url_for('static',filename='images/'+about_info.picture)}}" alt="Site Logo">
+        <h2 class="card-text text-center">{{about_info.name}}</h2>
+        <p class="card-text text-center">{{about_info.tagline}}</p>
+        <div class="border-top p-4">
+            <h4 class="card-text">About the site</h4>
+            <p class="card-text blog-content">{{about_info.about}}</p></div>
+    </div>
+</div>
+{% endblock contents %}
