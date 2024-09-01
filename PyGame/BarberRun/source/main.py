@@ -26,8 +26,8 @@ class Player:
         self.hitbox = pygame.Rect(self.x + 20, self.y, 62, 120)
         self.attack_hitbox = pygame.Rect(self.x + 20, self.y, self.image.get_width() - 30, self.image.get_height())
         self.sound = pygame.mixer.Sound('../audio/whip.wav')
-        with open('high_score.txt', 'r') as high_score:
-            self.high_score = int(high_score.read())
+        with open('72105103104328399111114101.BHAENS', mode='rb') as high_score:
+            self.high_score = int.from_bytes(high_score.read(), byteorder='big')
         self.dead = False
         self.pause = False
         self.start = False
@@ -354,8 +354,8 @@ def deadScreen(player, events, font):
     high_score = font.render(f"High Score: {player.high_score}", 1, (20, 0, 0))
     if player.high_score < player.score // 10:
         high_score = font.render("New High Score!!", 1, (20, 0, 0))
-        with open('high_score.txt', 'w') as high_score_file:
-            high_score_file.write(str(player.score//10))
+        with open('72105103104328399111114101.BHAENS', mode='wb') as high_score_file:
+            high_score_file.write((player.score//10).to_bytes(length=1024, byteorder='big'))
     play_again = font.render(f"Play Again", 1, (20, 0, 0))
     play_again_button = pygame.Rect((480 - play_again.get_width() / 2, 355 - play_again.get_height(),
                                      play_again.get_width() + 40, play_again.get_height() + 40))
